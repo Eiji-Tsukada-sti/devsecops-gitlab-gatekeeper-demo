@@ -1,0 +1,55 @@
+stages:
+  - build
+
+# develop / main 以外はパイプラインを生成しない
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^(develop|main)$/'
+      when: always
+    - when: never
+
+variables:
+  VERSION: "v1.0"
+  IMAGE_REPO: "${CI_REGISTRY_IMAGE}/nginx"
+  IMAGE_TAG: "${CI_COMMIT_TAG:-${CI_COMMIT_SHORT_SHA}}"
+  IMAGE_FULL: "${IMAGE_REPO}:${IMAGE_TAG}"
+
+build_image:
+  stage: build
+  tags: [devsecops-runner]
+  image: registry.gitlab.local.example.com/root/registry-project/docker:28.3.3
+  services:
+    - name: registry.gitlab.local.example.com/root/registry-project/docker:28.3.3-dind
+      alias: docker
+      entrypoint: ["/bin/sh", "-lc"]
+      command:
+        - >
+          test -f /etc/gitlab-runner/certs/gitlab.local.example.com.crt &&
+          cp /etc/gitlab-runner/certs/gitlab.local.example.com.crt /usr/local/share/ca-certificates/ca.crt &&
+          update-ca-certificates || true ;
+          exec dockerd-entrypoint.sh
+          --tls=false
+          --host=unix:///var/run/docker.sock
+          --host=tcp://0.0.0.0:2375
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  # develop/main ごとにタグ名を固定（dev-v1.0 / prod-v1.0）
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      variables:
+        IMAGE_TAG: "dev-${VERSION}"
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      variables:
+        IMAGE_TAG: "prod-${VERSION}"
+  before_script:
+    - test -f /etc/gitlab-runner/certs/gitlab.local.example.com.crt && cp /etc/gitlab-runner/certs/gitlab.local.example.com.crt /usr/local/share/ca-certificates/ca.crt && update-ca-certificates || true
+    - echo "Waiting for Docker daemon..."; until docker info >/dev/null 2>&1; do sleep 1; done; echo "Docker is ready."
+    - export IMAGE_FULL="${IMAGE_REPO}:${IMAGE_TAG}"
+    - echo "IMAGE_REPO=${IMAGE_REPO}"
+    - echo "IMAGE_TAG=${IMAGE_TAG}"
+    - echo "IMAGE_FULL=${IMAGE_FULL}"
+    - docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+  script:
+    - docker build --no-cache -f build/Containerfile -t "$IMAGE_FULL" ./build
+    - docker push "${IMAGE_FULL}"

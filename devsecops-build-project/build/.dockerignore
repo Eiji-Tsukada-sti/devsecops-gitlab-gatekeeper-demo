@@ -1,0 +1,8 @@
+# Git関連のファイルを除外
+.git
+.gitignore
+
+# その他の不要なファイルやディレクトリを除外
+.DS_Store
+*.log
+npm-debug.log*

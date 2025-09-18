@@ -1,0 +1,14 @@
+# デプロイするネームスペース
+namespace: devsecops-develop
+
+# 開発用Nginxイメージの情報
+image:
+  repository: registry.gitlab.local.example.com/devsecops-user/devsecops-build-project/nginx
+  tag: "dev-v1.0"
+
+# Registry Auth
+imagePullSecrets:
+  - name: gitlab-registry-secret
+
+# 開発環境のレプリカ数
+replicaCount: 1

@@ -1,0 +1,67 @@
+stages:
+  - deploy
+
+.common_vars: &common_vars
+  HELM_RELEASE: "devsecops-nginx"
+  HELM_CHART_DIR: "deploy/devsecops-nginx-chart"
+  VALUES_COMMON: "deploy/devsecops-nginx-chart/values.yaml"
+
+.default_deploy: &default_deploy
+  stage: deploy
+  image: registry.gitlab.local.example.com/devsecops-user/devsecops-deploy-project/helm:3
+  before_script:
+    - set -euo pipefail
+    - helm version
+    - |
+      if [ -n "${K8S_NAMESPACE:-}" ]; then
+        HELM_NS_ARG="-n ${K8S_NAMESPACE}"
+      else
+        echo "K8S_NAMESPACE variable not provided. Helm will use the current context's namespace."
+        HELM_NS_ARG=""
+      fi
+    - helm dependency update "$HELM_CHART_DIR" || true
+
+deploy_develop:
+  <<: *default_deploy
+  tags:
+    - devsecops-runner
+  variables:
+    <<: *common_vars
+    VALUES_ENV: "deploy/Config/develop-values.yaml"
+    K8S_NAMESPACE: "$DEPLOY_PROJECT_NAME_DEVELOP"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "push"'
+  environment: { name: develop, deployment_tier: development }
+  script:
+    - |
+      set -euo pipefail
+      : "${HELM_RELEASE:=devsecops-nginx}"
+      : "${HELM_CHART_DIR:=deploy/devsecops-nginx-chart}"
+      : "${VALUES_COMMON:=deploy/devsecops-nginx-chart/values.yaml}"
+      : "${VALUES_ENV:?VALUES_ENV must be set}"
+      test -f "${HELM_CHART_DIR}/Chart.yaml" || { echo "Chart.yaml not found under ${HELM_CHART_DIR}"; exit 1; }
+      echo "[RUN] helm upgrade --install ${HELM_RELEASE} ${HELM_CHART_DIR} ${HELM_NS_ARG} -f ${VALUES_COMMON} -f ${VALUES_ENV}"
+      helm upgrade --install "${HELM_RELEASE}" "${HELM_CHART_DIR}" ${HELM_NS_ARG} -f "${VALUES_COMMON}" -f "${VALUES_ENV}"
+
+deploy_production:
+  <<: *default_deploy
+  tags:
+    - devsecops-runner
+  variables:
+    <<: *common_vars
+    VALUES_ENV: "deploy/Config/product-values.yaml"
+    K8S_NAMESPACE: "$DEPLOY_PROJECT_NAME_PRODUCTION"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
+      allow_failure: false
+  environment: { name: production, deployment_tier: production }
+  script:
+    - |
+      set -euo pipefail
+      : "${HELM_RELEASE:=devsecops-nginx}"
+      : "${HELM_CHART_DIR:=deploy/devsecops-nginx-chart}"
+      : "${VALUES_COMMON:=deploy/devsecops-nginx-chart/values.yaml}"
+      : "${VALUES_ENV:?VALUES_ENV must be set}"
+      test -f "${HELM_CHART_DIR}/Chart.yaml" || { echo "Chart.yaml not found under ${HELM_CHART_DIR}"; exit 1; }
+      echo "[RUN] helm upgrade --install ${HELM_RELEASE} ${HELM_CHART_DIR} ${HELM_NS_ARG} -f ${VALUES_COMMON} -f ${VALUES_ENV}"
+      helm upgrade --install "${HELM_RELEASE}" "${HELM_CHART_DIR}" ${HELM_NS_ARG} -f "${VALUES_COMMON}" -f "${VALUES_ENV}"
