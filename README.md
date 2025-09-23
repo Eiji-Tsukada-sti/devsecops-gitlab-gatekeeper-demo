@@ -7,26 +7,35 @@
 
 ```bash
 .
-├── devsecops-build-project      # アプリケーションのビルド用プロジェクト
-│   ├── .gitlab-ci.yml           # コンテナイメージビルド用パイプライン定義
+├── devsecops-build-project          # アプリケーションのビルド用プロジェクト
+│   ├── .gitlab-ci.yml               # コンテナイメージビルド用パイプライン定義
 │   ├── README.md
 │   └── build
 │       ├── .dockerignore
-│       ├── Containerfile        # Nginx ベースのコンテナ定義
+│       ├── Containerfile            # Nginx ベースのコンテナ定義
 │       └── src
-│           ├── html/index.html  # サンプルの Web ページ
-│           └── nginx.conf       # Nginx 設定
-└── devsecops-deploy-project     # アプリケーションのデプロイ用プロジェクト
-    ├── .gitlab-ci.yml           # Helm を利用したデプロイ用パイプライン定義
-    ├── README.md
-    └── deploy
-        ├── Config
-        │   ├── develop-values.yaml   # 開発環境向け設定
-        │   └── product-values.yaml   # 本番環境向け設定
-        └── devsecops-nginx-chart     # Helm Chart
-            ├── Chart.yaml
-            ├── templates/            # Deployment / Service / Route 定義
-            └── values.yaml
+│           ├── html/index.html      # サンプルの Web ページ
+│           └── nginx.conf           # Nginx 設定
+│
+├── devsecops-deploy-project         # アプリケーションのデプロイ用プロジェクト
+│   ├── .gitlab-ci.yml               # Helm を利用したデプロイ用パイプライン定義
+│   ├── README.md
+│   └── deploy
+│       ├── Config
+│       │   ├── develop-values.yaml  # 開発環境向け設定
+│       │   └── product-values.yaml  # 本番環境向け設定
+│       └── devsecops-nginx-chart    # Helm Chart
+│           ├── Chart.yaml
+│           ├── templates/           # Deployment / Service / Route 定義
+│           └── values.yaml
+│
+└── gatekeeper-templates             # OPA Gatekeeper 用ポリシー定義
+    └── sample-case-gatekeeper
+        ├── ConstraintTemplate_labelsmatchnamespace.yaml   # Namespace ラベル必須ルールのテンプレート
+        ├── ConstraintTemplate_requiredimagetag.yaml       # イメージタグ必須ルールのテンプレート
+        ├── Constraints_labelsmatchnamespace.yaml          # Namespace ラベル必須ルールの制約
+        ├── Constraints_requiredimagetag_dev.yaml          # イメージタグ必須ルール（開発環境）
+        └── Constraints_requiredimagetag_prod.yaml         # イメージタグ必須ルール（本番環境）
 ```
 
 - devsecops-build-project
