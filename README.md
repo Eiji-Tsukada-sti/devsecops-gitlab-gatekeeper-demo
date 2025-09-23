@@ -30,12 +30,11 @@
 │           └── values.yaml
 │
 └── gatekeeper-templates             # OPA Gatekeeper 用ポリシー定義
-    └── sample-case-gatekeeper
-        ├── ConstraintTemplate_labelsmatchnamespace.yaml   # Namespace ラベル必須ルールのテンプレート
-        ├── ConstraintTemplate_requiredimagetag.yaml       # イメージタグ必須ルールのテンプレート
-        ├── Constraints_labelsmatchnamespace.yaml          # Namespace ラベル必須ルールの制約
-        ├── Constraints_requiredimagetag_dev.yaml          # イメージタグ必須ルール（開発環境）
-        └── Constraints_requiredimagetag_prod.yaml         # イメージタグ必須ルール（本番環境）
+    ├── ConstraintTemplate_labelsmatchnamespace.yaml   # Namespace ラベル必須ルールのテンプレート
+    ├── ConstraintTemplate_requiredimagetag.yaml       # イメージタグ必須ルールのテンプレート
+    ├── Constraints_labelsmatchnamespace.yaml          # Namespace ラベル必須ルールの制約
+    ├── Constraints_requiredimagetag_dev.yaml          # イメージタグ必須ルール（開発環境）
+    └── Constraints_requiredimagetag_prod.yaml         # イメージタグ必須ルール（本番環境）
 ```
 
 - devsecops-build-project
