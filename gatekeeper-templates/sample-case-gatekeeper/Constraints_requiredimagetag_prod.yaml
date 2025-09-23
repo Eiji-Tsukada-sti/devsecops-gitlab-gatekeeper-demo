@@ -1,0 +1,12 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredImageTag
+metadata:
+  name: require-prod-in-image-tag
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces: ["devsecops-production"]
+  parameters:
+    substr: "prod"

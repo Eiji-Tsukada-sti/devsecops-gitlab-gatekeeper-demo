@@ -1,0 +1,48 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8senvlabelsmatchnamespace
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sEnvLabelsMatchNamespace
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            label:
+              type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8senvlabelsmatchnamespace
+
+        # 違反ルール1：Podに必須ラベルが存在しない場合
+        violation[{"msg": msg}] {
+          object := input.review.object
+          object.kind == "Pod"
+          
+          required_label := input.parameters.label
+          
+          # ラベルが存在しない場合を明確に検知
+          not object.metadata.labels[required_label]
+          
+          msg := sprintf("Pod '%v' には必須ラベル '%v' がありません。", [object.metadata.name, required_label])
+        }
+
+        # 違反ルール2：必須ラベルの値がNamespace名と一致しない場合
+        violation[{"msg": msg}] {
+          object := input.review.object
+          object.kind == "Pod"
+          
+          required_label := input.parameters.label
+          
+          # ここでラベルの存在は保証されている
+          label_value := object.metadata.labels[required_label]
+          namespace_name := object.metadata.namespace
+
+          label_value != namespace_name
+          
+          msg := sprintf("Pod '%v' の '%v' ラベルの値は、Namespace名 '%v' と一致する必要があります。現在の値は '%v' です。", [object.metadata.name, required_label, namespace_name, label_value])
+        }
