@@ -1,0 +1,14 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sEnvLabelsMatchNamespace
+metadata:
+  name: require-env-label-match-namespace
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces:
+      - "devsecops-develop"
+      - "devsecops-production"
+  parameters:
+    label: "env"
